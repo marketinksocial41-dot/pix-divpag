@@ -13,10 +13,10 @@ app.use(express.json());
 // ======================================
 
 const CLIENT_ID =
-process.env.CLIENT_ID;
+"paimarcio_1160513795";
 
 const CLIENT_SECRET =
-process.env.CLIENT_SECRET;
+"9b38072f5530c7db953abf89d118c0ed208540ba474cbdcb0347f1ba11e75b64";
 
 
 // ======================================
