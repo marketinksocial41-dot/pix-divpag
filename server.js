@@ -28,6 +28,31 @@ console.log("CLIENT_SECRET:", CLIENT_SECRET);
 
 
 // ======================================
+// VER IP DO RENDER
+// ======================================
+
+app.get("/ip", async (req, res) => {
+
+  try {
+
+    const response = await axios.get(
+      "https://api.ipify.org?format=json"
+    );
+
+    res.send(response.data);
+
+  } catch(err){
+
+    res.send({
+      erro: err.message
+    });
+
+  }
+
+});
+
+
+// ======================================
 // ROTA PRINCIPAL
 // ======================================
 
@@ -101,6 +126,18 @@ word-break:break-all;
 <div class="code">
 
 /?valor=10&descricao=Pai+Marcio
+
+</div>
+
+<p>
+
+Ver IP do servidor:
+
+</p>
+
+<div class="code">
+
+/ip
 
 </div>
 
