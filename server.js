@@ -153,6 +153,48 @@ Ver IP do servidor:
 
 
     // ======================================
+    // FORM DATA DIVPAG
+    // ======================================
+
+    const params = new URLSearchParams();
+
+    params.append(
+      "client_id",
+      CLIENT_ID
+    );
+
+    params.append(
+      "client_secret",
+      CLIENT_SECRET
+    );
+
+    params.append(
+      "nome",
+      "Pai Marcio"
+    );
+
+    params.append(
+      "cpf",
+      "12345678901"
+    );
+
+    params.append(
+      "valor",
+      Number(valor)
+    );
+
+    params.append(
+      "descricao",
+      descricao
+    );
+
+    params.append(
+      "urlnoty",
+      "https://google.com"
+    );
+
+
+    // ======================================
     // REQUISIÇÃO DIVPAG
     // ======================================
 
@@ -160,25 +202,12 @@ Ver IP do servidor:
 
       "https://divpag.com/v3/pix/qrcode",
 
-      {
-        client_id: CLIENT_ID,
-
-        client_secret: CLIENT_SECRET,
-
-        nome: "Pai Marcio",
-
-        cpf: "12345678901",
-
-        valor: Number(valor),
-
-        descricao: descricao,
-
-        urlnoty: "https://google.com"
-      },
+      params,
 
       {
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type":
+          "application/x-www-form-urlencoded"
         }
       }
 
