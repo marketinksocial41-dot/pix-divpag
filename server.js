@@ -5,6 +5,7 @@ const axios = require("axios");
 const app = express();
 
 app.use(cors());
+app.use(express.json());
 
 
 // ======================================
@@ -27,7 +28,7 @@ const API_URL =
 
 
 // ======================================
-// GERAR PIX
+// ROTA PRINCIPAL
 // ======================================
 
 app.get("/", async (req, res) => {
@@ -40,14 +41,78 @@ app.get("/", async (req, res) => {
     const descricao =
       req.query.descricao || "Pagamento";
 
+    // ======================================
+    // VALIDAR VALOR
+    // ======================================
+
     if(!valor){
 
       return res.send(`
-        <h2>Informe o valor</h2>
 
-        Exemplo:<br><br>
+<!DOCTYPE html>
+<html lang="pt-br">
 
-        /?valor=10&descricao=Pai+Marcio
+<head>
+
+<meta charset="UTF-8">
+
+<title>PIX DIVPAG</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f5f5f5;
+display:flex;
+justify-content:center;
+align-items:center;
+min-height:100vh;
+}
+
+.card{
+background:white;
+padding:25px;
+border-radius:12px;
+width:400px;
+box-shadow:0 0 10px rgba(0,0,0,0.1);
+}
+
+h2{
+margin-top:0;
+}
+
+.code{
+background:#f1f1f1;
+padding:10px;
+border-radius:8px;
+margin-top:10px;
+word-break:break-all;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="card">
+
+<h2>Informe o valor</h2>
+
+<p>Exemplo:</p>
+
+<div class="code">
+
+/?valor=10&descricao=Pai+Marcio
+
+</div>
+
+</div>
+
+</body>
+
+</html>
+
       `);
 
     }
@@ -77,16 +142,23 @@ app.get("/", async (req, res) => {
           "application/json"
 
         }
+
       }
 
     );
 
 
+    // ======================================
+    // DEBUG
+    // ======================================
+
+    console.log("RESPOSTA DIVPAG:");
+
     console.log(response.data);
 
 
     // ======================================
-    // RETORNO DIVPAG
+    // RETORNO PIX
     // ======================================
 
     const codigoPix =
@@ -97,20 +169,38 @@ app.get("/", async (req, res) => {
 
       response.data.pix ||
 
-      response.data.copy_paste;
+      response.data.copy_paste ||
 
+      response.data.emv;
+
+
+    // ======================================
+    // NÃO RETORNOU PIX
+    // ======================================
 
     if(!codigoPix){
 
-      return res.send(
-        "PIX não retornado pela DIVPAG"
-      );
+      return res.send(`
+
+<h2>PIX não retornado pela DIVPAG</h2>
+
+<pre>
+
+${JSON.stringify(
+response.data,
+null,
+2
+)}
+
+</pre>
+
+      `);
 
     }
 
 
     // ======================================
-    // HTML PIX
+    // HTML FINAL
     // ======================================
 
     res.send(`
@@ -122,7 +212,7 @@ app.get("/", async (req, res) => {
 
 <meta charset="UTF-8">
 
-<title>PIX</title>
+<title>Pagamento PIX</title>
 
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 
@@ -135,15 +225,36 @@ display:flex;
 justify-content:center;
 align-items:center;
 min-height:100vh;
+margin:0;
 }
 
 .card{
 background:white;
 padding:25px;
 border-radius:12px;
-width:400px;
+width:420px;
 text-align:center;
 box-shadow:0 0 10px rgba(0,0,0,0.1);
+}
+
+h2{
+margin-top:0;
+}
+
+.valor{
+font-size:30px;
+font-weight:bold;
+color:#198754;
+}
+
+.descricao{
+margin-top:10px;
+font-size:16px;
+color:#555;
+}
+
+#qrcode{
+margin-top:20px;
 }
 
 #pix{
@@ -153,6 +264,7 @@ padding:10px;
 border-radius:8px;
 word-break:break-all;
 font-size:13px;
+text-align:left;
 }
 
 button{
@@ -165,6 +277,11 @@ background:#198754;
 color:white;
 font-size:16px;
 cursor:pointer;
+font-weight:bold;
+}
+
+button:hover{
+opacity:0.9;
 }
 
 </style>
@@ -177,16 +294,18 @@ cursor:pointer;
 
 <h2>Pagamento PIX</h2>
 
-<h3>R$ ${valor}</h3>
+<div class="valor">
+R$ ${valor}
+</div>
 
-<p>${descricao}</p>
+<div class="descricao">
+${descricao}
+</div>
 
 <div id="qrcode"></div>
 
 <div id="pix">
-
 ${codigoPix}
-
 </div>
 
 <button onclick="copiarPix()">
@@ -224,9 +343,10 @@ alert("PIX copiado!");
 </script>
 
 </body>
+
 </html>
 
-`);
+    `);
 
   } catch(error){
 
@@ -236,9 +356,39 @@ alert("PIX copiado!");
 
     res.send(`
 
-      <h2>Erro ao gerar PIX</h2>
+<!DOCTYPE html>
+<html>
 
-      <pre>
+<head>
+
+<meta charset="UTF-8">
+
+<title>Erro PIX</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f5f5f5;
+padding:30px;
+}
+
+pre{
+background:white;
+padding:20px;
+border-radius:12px;
+overflow:auto;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h2>Erro ao gerar PIX</h2>
+
+<pre>
 
 ${JSON.stringify(
 error.response?.data ||
@@ -247,7 +397,11 @@ null,
 2
 )}
 
-      </pre>
+</pre>
+
+</body>
+
+</html>
 
     `);
 
@@ -266,7 +420,7 @@ process.env.PORT || 3000;
 app.listen(PORT, () => {
 
   console.log(
-    "Servidor online"
+    "Servidor online na porta " + PORT
   );
 
 });
