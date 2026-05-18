@@ -7,20 +7,28 @@ const app = express();
 app.use(cors());
 
 
-// =====================================
+// ======================================
 // CREDENCIAIS DIVPAG
-// =====================================
+// ======================================
 
 const TOKEN =
-"paimarcio_1160513795";
+"paimarcio_7296392775";
 
 const SECRET_KEY =
-"9b38072f5530c7db953abf89d118c0ed208540ba474cbdcb0347f1ba11e75b64";
+"cf5d4772d85c371533b1debf3e59df75b0a5cf1c6a56746c5fc2c82549fa4593";
 
 
-// =====================================
-// ROTA PRINCIPAL
-// =====================================
+// ======================================
+// URL API DIVPAG
+// ======================================
+
+const API_URL =
+"https://divpag.com/v3";
+
+
+// ======================================
+// GERAR PIX
+// ======================================
 
 app.get("/", async (req, res) => {
 
@@ -32,7 +40,6 @@ app.get("/", async (req, res) => {
     const descricao =
       req.query.descricao || "Pagamento";
 
-    // Se não informar valor
     if(!valor){
 
       return res.send(`
@@ -46,54 +53,65 @@ app.get("/", async (req, res) => {
     }
 
 
-    // =====================================
-    // CHAMADA DIVPAG
-    // =====================================
+    // ======================================
+    // REQUISIÇÃO DIVPAG
+    // ======================================
 
     const response = await axios.post(
 
-      "https://api.divpag.com.br/pix",
+      `${API_URL}/pix/qrcode`,
 
       {
-        valor,
-        descricao
+        value: Number(valor),
+        description: descricao
       },
 
       {
         headers: {
-          token: TOKEN,
-          "secret-key": SECRET_KEY
+
+          client_id: TOKEN,
+
+          client_secret: SECRET_KEY,
+
+          "Content-Type":
+          "application/json"
+
         }
       }
 
     );
 
 
-    // =====================================
-    // AJUSTE CONFORME RETORNO DA DIVPAG
-    // =====================================
+    console.log(response.data);
+
+
+    // ======================================
+    // RETORNO DIVPAG
+    // ======================================
 
     const codigoPix =
-
-      response.data.pix ||
 
       response.data.qrcode ||
 
       response.data.payload ||
 
-      response.data.copiaecola;
+      response.data.pix ||
+
+      response.data.copy_paste;
 
 
     if(!codigoPix){
 
-      return res.send("PIX não retornado");
+      return res.send(
+        "PIX não retornado pela DIVPAG"
+      );
 
     }
 
 
-    // =====================================
-    // HTML AUTOMÁTICO
-    // =====================================
+    // ======================================
+    // HTML PIX
+    // ======================================
 
     res.send(`
 
@@ -111,42 +129,42 @@ app.get("/", async (req, res) => {
 <style>
 
 body{
-  font-family:Arial;
-  background:#f5f5f5;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  min-height:100vh;
+font-family:Arial;
+background:#f5f5f5;
+display:flex;
+justify-content:center;
+align-items:center;
+min-height:100vh;
 }
 
 .card{
-  width:400px;
-  background:white;
-  padding:25px;
-  border-radius:12px;
-  text-align:center;
-  box-shadow:0 0 10px rgba(0,0,0,0.1);
+background:white;
+padding:25px;
+border-radius:12px;
+width:400px;
+text-align:center;
+box-shadow:0 0 10px rgba(0,0,0,0.1);
 }
 
 #pix{
-  margin-top:20px;
-  background:#f1f1f1;
-  padding:10px;
-  border-radius:8px;
-  word-break:break-all;
-  font-size:13px;
+margin-top:20px;
+background:#f1f1f1;
+padding:10px;
+border-radius:8px;
+word-break:break-all;
+font-size:13px;
 }
 
 button{
-  margin-top:15px;
-  width:100%;
-  padding:14px;
-  border:none;
-  border-radius:8px;
-  background:#198754;
-  color:white;
-  font-size:16px;
-  cursor:pointer;
+width:100%;
+padding:14px;
+margin-top:15px;
+border:none;
+border-radius:8px;
+background:#198754;
+color:white;
+font-size:16px;
+cursor:pointer;
 }
 
 </style>
@@ -166,11 +184,15 @@ button{
 <div id="qrcode"></div>
 
 <div id="pix">
+
 ${codigoPix}
+
 </div>
 
 <button onclick="copiarPix()">
+
 Copiar PIX
+
 </button>
 
 </div>
@@ -181,21 +203,21 @@ QRCode.toCanvas(
 
 document.getElementById("qrcode"),
 
-"${codigoPix}",
+`${codigoPix}`,
 
 {
-  width:280
+width:280
 }
 
 );
 
 function copiarPix(){
 
-  navigator.clipboard.writeText(
-    "${codigoPix}"
-  );
+navigator.clipboard.writeText(
+`${codigoPix}`
+);
 
-  alert("PIX copiado!");
+alert("PIX copiado!");
 
 }
 
@@ -212,16 +234,31 @@ function copiarPix(){
       error.response?.data || error.message
     );
 
-    res.send("Erro ao gerar PIX");
+    res.send(`
+
+      <h2>Erro ao gerar PIX</h2>
+
+      <pre>
+
+${JSON.stringify(
+error.response?.data ||
+error.message,
+null,
+2
+)}
+
+      </pre>
+
+    `);
 
   }
 
 });
 
 
-// =====================================
+// ======================================
 // PORTA
-// =====================================
+// ======================================
 
 const PORT =
 process.env.PORT || 3000;
