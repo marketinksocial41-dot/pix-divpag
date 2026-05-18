@@ -32,6 +32,10 @@ app.get("/", async (req, res) => {
     const descricao =
       req.query.descricao || "Pagamento";
 
+    // ======================================
+    // VALIDAR VALOR
+    // ======================================
+
     if(!valor){
 
       return res.send(`
@@ -50,30 +54,6 @@ app.get("/", async (req, res) => {
 
 
     // ======================================
-    // PAYLOAD DIVPAG
-    // ======================================
-
-    const payload = {
-
-      client_id: CLIENT_ID,
-
-      client_secret: CLIENT_SECRET,
-
-      nome: "Pai Marcio",
-
-      cpf: "12345678901",
-
-      valor: Number(valor),
-
-      descricao: descricao,
-
-      urlnoty:
-      "https://google.com"
-
-    };
-
-
-    // ======================================
     // REQUISIÇÃO DIVPAG
     // ======================================
 
@@ -81,7 +61,27 @@ app.get("/", async (req, res) => {
 
       "https://divpag.com/v3/pix/qrcode",
 
-      payload
+      {
+        client_id: CLIENT_ID,
+
+        client_secret: CLIENT_SECRET,
+
+        nome: "Pai Marcio",
+
+        cpf: "12345678901",
+
+        valor: Number(valor),
+
+        descricao: descricao,
+
+        urlnoty: "https://google.com"
+      },
+
+      {
+        headers: {
+          "Content-Type": "application/json"
+        }
+      }
 
     );
 
@@ -110,6 +110,10 @@ app.get("/", async (req, res) => {
       response.data.qrcode_text;
 
 
+    // ======================================
+    // NÃO RETORNOU PIX
+    // ======================================
+
     if(!codigoPix){
 
       return res.send(`
@@ -132,7 +136,7 @@ null,
 
 
     // ======================================
-    // HTML
+    // HTML FINAL
     // ======================================
 
     res.send(`
