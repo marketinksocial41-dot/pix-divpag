@@ -1,16 +1,14 @@
 const express = require("express");
 const cors = require("cors");
 const axios = require("axios");
-const path = require("path");
 
 const app = express();
 
 app.use(cors());
-app.use(express.json());
 
 
 // =====================================
-// SUAS CREDENCIAIS DIVPAG
+// CREDENCIAIS DIVPAG
 // =====================================
 
 const TOKEN =
@@ -21,18 +19,7 @@ const SECRET_KEY =
 
 
 // =====================================
-// SERVIR FRONTEND
-// =====================================
-
-app.use(express.static(
-  path.join(__dirname, "public")
-));
-
-
-// =====================================
-// GERAR PIX VIA URL
-// EXEMPLO:
-// /?valor=50&descricao=Pagamento
+// ROTA PRINCIPAL
 // =====================================
 
 app.get("/", async (req, res) => {
@@ -43,16 +30,21 @@ app.get("/", async (req, res) => {
       req.query.valor;
 
     const descricao =
-      req.query.descricao || "";
+      req.query.descricao || "Pagamento";
 
+    // Se não informar valor
     if(!valor){
 
-      return res.sendFile(
-        path.join(__dirname,
-        "public/index.html")
-      );
+      return res.send(`
+        <h2>Informe o valor</h2>
+
+        Exemplo:<br><br>
+
+        /?valor=10&descricao=Pai+Marcio
+      `);
 
     }
+
 
     // =====================================
     // CHAMADA DIVPAG
@@ -60,7 +52,7 @@ app.get("/", async (req, res) => {
 
     const response = await axios.post(
 
-      "https://api-ovz6.onrender.com",
+      "https://api.divpag.com.br/pix",
 
       {
         valor,
@@ -76,7 +68,143 @@ app.get("/", async (req, res) => {
 
     );
 
-    res.json(response.data);
+
+    // =====================================
+    // AJUSTE CONFORME RETORNO DA DIVPAG
+    // =====================================
+
+    const codigoPix =
+
+      response.data.pix ||
+
+      response.data.qrcode ||
+
+      response.data.payload ||
+
+      response.data.copiaecola;
+
+
+    if(!codigoPix){
+
+      return res.send("PIX não retornado");
+
+    }
+
+
+    // =====================================
+    // HTML AUTOMÁTICO
+    // =====================================
+
+    res.send(`
+
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>PIX</title>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+
+<style>
+
+body{
+  font-family:Arial;
+  background:#f5f5f5;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  min-height:100vh;
+}
+
+.card{
+  width:400px;
+  background:white;
+  padding:25px;
+  border-radius:12px;
+  text-align:center;
+  box-shadow:0 0 10px rgba(0,0,0,0.1);
+}
+
+#pix{
+  margin-top:20px;
+  background:#f1f1f1;
+  padding:10px;
+  border-radius:8px;
+  word-break:break-all;
+  font-size:13px;
+}
+
+button{
+  margin-top:15px;
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:8px;
+  background:#198754;
+  color:white;
+  font-size:16px;
+  cursor:pointer;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="card">
+
+<h2>Pagamento PIX</h2>
+
+<h3>R$ ${valor}</h3>
+
+<p>${descricao}</p>
+
+<div id="qrcode"></div>
+
+<div id="pix">
+${codigoPix}
+</div>
+
+<button onclick="copiarPix()">
+Copiar PIX
+</button>
+
+</div>
+
+<script>
+
+QRCode.toCanvas(
+
+document.getElementById("qrcode"),
+
+"${codigoPix}",
+
+{
+  width:280
+}
+
+);
+
+function copiarPix(){
+
+  navigator.clipboard.writeText(
+    "${codigoPix}"
+  );
+
+  alert("PIX copiado!");
+
+}
+
+</script>
+
+</body>
+</html>
+
+`);
 
   } catch(error){
 
@@ -84,9 +212,7 @@ app.get("/", async (req, res) => {
       error.response?.data || error.message
     );
 
-    res.status(500).json({
-      erro: "Erro ao gerar PIX"
-    });
+    res.send("Erro ao gerar PIX");
 
   }
 
@@ -98,12 +224,12 @@ app.get("/", async (req, res) => {
 // =====================================
 
 const PORT =
-  process.env.PORT || 3000;
+process.env.PORT || 3000;
 
 app.listen(PORT, () => {
 
   console.log(
-    `Servidor online na porta ${PORT}`
+    "Servidor online"
   );
 
 });
