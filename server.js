@@ -66,11 +66,6 @@ app.get("/", async (req, res) => {
     const descricao =
       req.query.descricao || "Pagamento";
 
-
-    // ======================================
-    // NOME E CPF VINDO DO HTML
-    // ======================================
-
     const nome =
       req.query.nome;
 
@@ -150,20 +145,12 @@ word-break:break-all;
     }
 
 
-    // ======================================
-    // VALIDAR NOME
-    // ======================================
-
     if(!nome){
 
       return res.send("Nome obrigatório");
 
     }
 
-
-    // ======================================
-    // VALIDAR CPF
-    // ======================================
 
     if(!cpf){
 
@@ -352,6 +339,7 @@ justify-content:center;
 align-items:center;
 min-height:100vh;
 margin:0;
+padding:20px;
 }
 
 .card{
@@ -361,6 +349,7 @@ border-radius:12px;
 width:420px;
 text-align:center;
 box-shadow:0 0 10px rgba(0,0,0,0.1);
+position:relative;
 }
 
 .valor{
@@ -407,6 +396,48 @@ button:hover{
 opacity:0.9;
 }
 
+.status{
+margin-top:18px;
+font-size:15px;
+color:#666;
+}
+
+.success{
+display:none;
+margin-top:20px;
+padding:20px;
+background:#e9fff1;
+border-radius:12px;
+border:2px solid #198754;
+animation:fade 0.4s ease;
+}
+
+.success h2{
+color:#198754;
+margin-bottom:10px;
+}
+
+.countdown{
+font-size:22px;
+font-weight:bold;
+margin-top:10px;
+color:#198754;
+}
+
+@keyframes fade{
+
+from{
+opacity:0;
+transform:scale(0.95);
+}
+
+to{
+opacity:1;
+transform:scale(1);
+}
+
+}
+
 </style>
 
 </head>
@@ -414,6 +445,8 @@ opacity:0.9;
 <body>
 
 <div class="card">
+
+<div id="pagamentoArea">
 
 <h2>Pagamento PIX</h2>
 
@@ -442,6 +475,39 @@ ${codigoPix}
 Copiar PIX
 
 </button>
+
+<div class="status">
+
+Aguardando pagamento...
+
+</div>
+
+</div>
+
+
+<!-- PAGAMENTO CONCLUÍDO -->
+
+<div class="success" id="successArea">
+
+<h2>
+✅ Pagamento concluído
+</h2>
+
+<p>
+Seu pagamento foi aprovado com sucesso.
+</p>
+
+<p>
+Esta página será fechada automaticamente em:
+</p>
+
+<div class="countdown" id="countdown">
+
+10
+
+</div>
+
+</div>
 
 </div>
 
@@ -481,6 +547,48 @@ navigator.clipboard.writeText(
 alert("PIX copiado!");
 
 }
+
+
+// ======================================
+// SIMULAÇÃO PAGAMENTO APROVADO
+// ======================================
+// TROQUE PELO SEU WEBHOOK REAL FUTURAMENTE
+// ======================================
+
+setTimeout(() => {
+
+document
+.getElementById("pagamentoArea")
+.style.display = "none";
+
+document
+.getElementById("successArea")
+.style.display = "block";
+
+let tempo = 10;
+
+const countdown =
+document.getElementById("countdown");
+
+const interval = setInterval(() => {
+
+tempo--;
+
+countdown.innerHTML = tempo;
+
+if(tempo <= 0){
+
+clearInterval(interval);
+
+window.close();
+
+window.location.href = "about:blank";
+
+}
+
+}, 1000);
+
+}, 15000);
 
 </script>
 
