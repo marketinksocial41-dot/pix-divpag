@@ -35,9 +35,7 @@ console.log("CLIENT_SECRET:", CLIENT_SECRET);
 
 
 // ======================================
-// WEBHOOK DIVPAG
-// ======================================
-// RECEBE CONFIRMAÇÃO REAL DO PAGAMENTO
+// WEBHOOK REAL DIVPAG
 // ======================================
 
 app.post("/webhook", (req, res) => {
@@ -47,47 +45,57 @@ app.post("/webhook", (req, res) => {
     console.log("WEBHOOK RECEBIDO:");
     console.log(req.body);
 
+    const body = req.body;
+
     const transacaoId =
 
-      req.body.id ||
+      body.id ||
+      body.txid ||
+      body.transaction_id ||
+      body.pix_id ||
+      body.reference ||
+      body.external_id;
 
-      req.body.txid ||
-
-      req.body.transaction_id ||
-
-      req.body.pix_id;
-
-    const status = (
-      req.body.status ||
+    const status = String(
+      body.status ||
+      body.situacao ||
+      body.payment_status ||
       ""
     ).toLowerCase();
 
-    if(
-      transacaoId &&
-      (
-        status.includes("pago") ||
-        status.includes("paid") ||
-        status.includes("approved") ||
-        status.includes("aprovado")
-      )
-    ){
+
+    // ======================================
+    // CONFIRMAÇÃO REAL
+    // ======================================
+
+    const aprovado =
+
+      status.includes("paid") ||
+      status.includes("pago") ||
+      status.includes("approved") ||
+      status.includes("aprovado") ||
+      status.includes("completed") ||
+      status.includes("concluido");
+
+
+    if(transacaoId && aprovado){
 
       pagamentos[transacaoId] = true;
 
       console.log(
-        "Pagamento confirmado:",
+        "PAGAMENTO APROVADO:",
         transacaoId
       );
 
     }
 
-    res.send("OK");
+    res.status(200).send("OK");
 
   } catch(err){
 
     console.log(err);
 
-    res.send("ERRO");
+    res.status(500).send("ERRO");
 
   }
 
@@ -95,7 +103,7 @@ app.post("/webhook", (req, res) => {
 
 
 // ======================================
-// CONSULTAR STATUS
+// STATUS PAGAMENTO
 // ======================================
 
 app.get("/status/:id", (req, res) => {
@@ -103,14 +111,17 @@ app.get("/status/:id", (req, res) => {
   const id = req.params.id;
 
   res.send({
-    pago: pagamentos[id] || false
+
+    pago:
+      pagamentos[id] || false
+
   });
 
 });
 
 
 // ======================================
-// VER IP
+// IP
 // ======================================
 
 app.get("/ip", async (req, res) => {
@@ -156,7 +167,7 @@ app.get("/", async (req, res) => {
 
 
     // ======================================
-    // VALIDAR CAMPOS
+    // VALIDAÇÃO
     // ======================================
 
     if(!valor){
@@ -182,14 +193,16 @@ app.get("/", async (req, res) => {
     // LIMPAR CPF
     // ======================================
 
-    const cpfLimpo = cpf.replace(/\D/g, "");
+    const cpfLimpo =
+      cpf.replace(/\D/g,"");
 
 
     // ======================================
-    // FORM DATA DIVPAG
+    // PARAMS
     // ======================================
 
-    const params = new URLSearchParams();
+    const params =
+      new URLSearchParams();
 
     params.append(
       "client_id",
@@ -223,7 +236,7 @@ app.get("/", async (req, res) => {
 
 
     // ======================================
-    // WEBHOOK URL
+    // WEBHOOK
     // ======================================
 
     params.append(
@@ -233,7 +246,7 @@ app.get("/", async (req, res) => {
 
 
     // ======================================
-    // REQUISIÇÃO DIVPAG
+    // GERAR PIX
     // ======================================
 
     const response = await axios.post(
@@ -243,10 +256,14 @@ app.get("/", async (req, res) => {
       params,
 
       {
+
         headers: {
+
           "Content-Type":
           "application/x-www-form-urlencoded"
+
         }
+
       }
 
     );
@@ -291,26 +308,44 @@ app.get("/", async (req, res) => {
 
       response.data.pix_id ||
 
+      response.data.reference ||
+
+      response.data.external_id ||
+
       Date.now().toString();
 
 
+    console.log(
+      "TRANSACAO:",
+      transacaoId
+    );
+
+
     // ======================================
-    // NÃO RETORNOU PIX
+    // PIX INVÁLIDO
     // ======================================
 
     if(!codigoPix){
 
       return res.send(`
-        <pre>
-${JSON.stringify(response.data,null,2)}
-        </pre>
+
+<pre>
+
+${JSON.stringify(
+response.data,
+null,
+2
+)}
+
+</pre>
+
       `);
 
     }
 
 
     // ======================================
-    // HTML FINAL
+    // HTML
     // ======================================
 
     res.send(`
@@ -322,47 +357,63 @@ ${JSON.stringify(response.data,null,2)}
 
 <meta charset="UTF-8">
 
+<meta
+name="viewport"
+content="width=device-width,initial-scale=1.0"
+/>
+
 <title>Pagamento PIX</title>
 
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 
 <style>
 
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial,sans-serif;
+}
+
 body{
-font-family:Arial;
-background:#f5f5f5;
+background:#f4f4f4;
 display:flex;
 justify-content:center;
 align-items:center;
 min-height:100vh;
-margin:0;
 padding:20px;
 }
 
 .card{
 background:white;
+width:100%;
+max-width:420px;
 padding:25px;
-border-radius:14px;
-width:420px;
+border-radius:18px;
+box-shadow:0 0 20px rgba(0,0,0,0.08);
 text-align:center;
-box-shadow:0 0 15px rgba(0,0,0,0.1);
+}
+
+h2{
+margin-bottom:15px;
 }
 
 .valor{
-font-size:32px;
+font-size:34px;
 font-weight:bold;
 color:#198754;
+margin-bottom:10px;
 }
 
 .descricao{
-margin-top:10px;
 color:#555;
+margin-bottom:20px;
 }
 
 #qrcode{
-margin-top:20px;
 display:flex;
 justify-content:center;
+margin-top:10px;
 }
 
 #pix{
@@ -377,41 +428,41 @@ text-align:left;
 
 button{
 width:100%;
-padding:14px;
-margin-top:15px;
+padding:15px;
 border:none;
-border-radius:8px;
+border-radius:10px;
 background:#198754;
 color:white;
 font-size:16px;
-cursor:pointer;
 font-weight:bold;
+cursor:pointer;
+margin-top:15px;
 }
 
 button:hover{
 opacity:0.9;
 }
 
-.status{
-margin-top:18px;
-font-size:16px;
-color:#666;
-}
-
 .loading{
-margin-top:15px;
+margin-top:20px;
 color:#198754;
 font-weight:bold;
 animation:pulse 1s infinite;
 }
 
+.status{
+margin-top:15px;
+font-size:15px;
+color:#666;
+}
+
 .success{
 display:none;
-margin-top:20px;
 padding:20px;
-background:#e9fff1;
-border-radius:12px;
+background:#ebfff2;
+border-radius:14px;
 border:2px solid #198754;
+animation:fade 0.4s ease;
 }
 
 .success h2{
@@ -419,11 +470,9 @@ color:#198754;
 margin-bottom:10px;
 }
 
-.countdown{
-font-size:25px;
-font-weight:bold;
-margin-top:10px;
-color:#198754;
+.success p{
+color:#333;
+line-height:1.7;
 }
 
 @keyframes pulse{
@@ -442,6 +491,20 @@ opacity:0.5;
 
 }
 
+@keyframes fade{
+
+from{
+opacity:0;
+transform:scale(0.95);
+}
+
+to{
+opacity:1;
+transform:scale(1);
+}
+
+}
+
 </style>
 
 </head>
@@ -450,9 +513,14 @@ opacity:0.5;
 
 <div class="card">
 
+
+<!-- AREA PAGAMENTO -->
+
 <div id="pagamentoArea">
 
-<h2>Pagamento PIX</h2>
+<h2>
+Pagamento PIX
+</h2>
 
 <div class="valor">
 
@@ -482,46 +550,50 @@ Copiar PIX
 
 <div class="status">
 
-Aguardando confirmação do pagamento...
+Aguardando pagamento...
 
 </div>
 
 <div class="loading">
 
-Verificando pagamento automaticamente...
+Verificando pagamento automaticamente
 
 </div>
 
 </div>
 
 
-<!-- PAGAMENTO CONCLUÍDO -->
+<!-- AREA APROVADO -->
 
-<div class="success" id="successArea">
+<div
+class="success"
+id="successArea"
+>
 
 <h2>
-✅ Pagamento concluído
+✅ Pagamento aprovado
 </h2>
 
 <p>
-Seu pagamento foi aprovado com sucesso.
+
+Seu pagamento foi confirmado com sucesso.
+
+<br><br>
+
+Aguarde, vamos direcionar você para o seu painel...
+
 </p>
-
-<p>
-Fechando página em:
-</p>
-
-<div class="countdown" id="countdown">
-
-10
-
-</div>
 
 </div>
 
 </div>
 
 <script>
+
+
+// ======================================
+// QR CODE
+// ======================================
 
 QRCode.toCanvas(
 
@@ -533,20 +605,25 @@ width:280
 
 function(error, canvas){
 
-  if(error){
+if(error){
 
-    console.log(error);
-    return;
+console.log(error);
+return;
 
-  }
+}
 
-  document
-    .getElementById("qrcode")
-    .appendChild(canvas);
+document
+.getElementById("qrcode")
+.appendChild(canvas);
 
 }
 
 );
+
+
+// ======================================
+// COPIAR PIX
+// ======================================
 
 function copiarPix(){
 
@@ -560,40 +637,56 @@ alert("PIX copiado!");
 
 
 // ======================================
-// CONSULTA PAGAMENTO REAL
+// EVITA DUPLICAR
+// ======================================
+
+let aprovado = false;
+
+
+// ======================================
+// VERIFICAR PAGAMENTO
 // ======================================
 
 async function verificarPagamento(){
 
-  try {
+if(aprovado){
+return;
+}
 
-    const response = await fetch(
-      "/status/${transacaoId}"
-    );
+try{
 
-    const data =
-      await response.json();
+const response = await fetch(
 
-    if(data.pago){
+"/status/${transacaoId}"
 
-      pagamentoAprovado();
+);
 
-    }
+const data =
+await response.json();
 
-  } catch(err){
 
-    console.log(err);
+if(data.pago){
 
-  }
+aprovado = true;
+
+mostrarAprovado();
+
+}
+
+}catch(err){
+
+console.log(err);
+
+}
 
 }
 
 
 // ======================================
-// PAGAMENTO APROVADO
+// MOSTRAR APROVADO
 // ======================================
 
-function pagamentoAprovado(){
+function mostrarAprovado(){
 
 document
 .getElementById("pagamentoArea")
@@ -603,28 +696,19 @@ document
 .getElementById("successArea")
 .style.display = "block";
 
-let tempo = 10;
 
-const countdown =
-document.getElementById("countdown");
+// ======================================
+// FECHA EM 20 SEGUNDOS
+// ======================================
 
-const interval = setInterval(() => {
-
-tempo--;
-
-countdown.innerHTML = tempo;
-
-if(tempo <= 0){
-
-clearInterval(interval);
+setTimeout(() => {
 
 window.close();
 
-window.location.href = "about:blank";
+window.location.href =
+"about:blank";
 
-}
-
-}, 1000);
+}, 20000);
 
 }
 
@@ -637,7 +721,7 @@ setInterval(() => {
 
 verificarPagamento();
 
-}, 5000);
+}, 3000);
 
 </script>
 
@@ -650,7 +734,11 @@ verificarPagamento();
   } catch(error){
 
     console.log(
-      error.response?.data || error.message
+
+      error.response?.data ||
+
+      error.message
+
     );
 
     res.send(`
@@ -662,7 +750,7 @@ verificarPagamento();
 
 <meta charset="UTF-8">
 
-<title>Erro DIVPAG</title>
+<title>Erro</title>
 
 <style>
 
@@ -685,7 +773,9 @@ overflow:auto;
 
 <body>
 
-<h2>Erro DIVPAG</h2>
+<h2>
+Erro DIVPAG
+</h2>
 
 <pre>
 
@@ -718,8 +808,8 @@ process.env.PORT || 3000;
 
 app.listen(PORT, () => {
 
-  console.log(
-    "Servidor online na porta " + PORT
-  );
+console.log(
+"Servidor online na porta " + PORT
+);
 
 });
