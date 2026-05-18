@@ -349,6 +349,8 @@ color:#555;
 
 #qrcode{
 margin-top:20px;
+display:flex;
+justify-content:center;
 }
 
 #pix{
@@ -420,12 +422,25 @@ Copiar PIX
 
 QRCode.toCanvas(
 
-document.getElementById("qrcode"),
-
 "${codigoPix}",
 
 {
 width:280
+},
+
+function(error, canvas){
+
+  if(error){
+
+    console.log(error);
+    return;
+
+  }
+
+  document
+    .getElementById("qrcode")
+    .appendChild(canvas);
+
 }
 
 );
