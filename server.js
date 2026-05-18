@@ -20,6 +20,14 @@ process.env.CLIENT_SECRET;
 
 
 // ======================================
+// DEBUG
+// ======================================
+
+console.log("CLIENT_ID:", CLIENT_ID);
+console.log("CLIENT_SECRET:", CLIENT_SECRET);
+
+
+// ======================================
 // ROTA PRINCIPAL
 // ======================================
 
@@ -140,6 +148,7 @@ word-break:break-all;
     );
 
 
+    console.log("RESPOSTA DIVPAG:");
     console.log(response.data);
 
 
@@ -172,6 +181,36 @@ word-break:break-all;
 
       return res.send(`
 
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>Resposta DIVPAG</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f5f5f5;
+padding:30px;
+}
+
+pre{
+background:white;
+padding:20px;
+border-radius:12px;
+overflow:auto;
+}
+
+</style>
+
+</head>
+
+<body>
+
 <h2>Resposta DIVPAG</h2>
 
 <pre>
@@ -183,6 +222,10 @@ null,
 )}
 
 </pre>
+
+</body>
+
+</html>
 
       `);
 
