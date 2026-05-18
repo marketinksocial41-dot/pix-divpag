@@ -5,26 +5,17 @@ const axios = require("axios");
 const app = express();
 
 app.use(cors());
-app.use(express.json());
 
 
 // ======================================
 // CREDENCIAIS DIVPAG
 // ======================================
 
-const TOKEN =
+const CLIENT_ID =
 "paimarcio_7296392775";
 
-const SECRET_KEY =
+const CLIENT_SECRET =
 "cf5d4772d85c371533b1debf3e59df75b0a5cf1c6a56746c5fc2c82549fa4593";
-
-
-// ======================================
-// URL API DIVPAG
-// ======================================
-
-const API_URL =
-"https://divpag.com/v3";
 
 
 // ======================================
@@ -41,81 +32,45 @@ app.get("/", async (req, res) => {
     const descricao =
       req.query.descricao || "Pagamento";
 
-    // ======================================
-    // VALIDAR VALOR
-    // ======================================
-
     if(!valor){
 
       return res.send(`
 
-<!DOCTYPE html>
-<html lang="pt-br">
-
-<head>
-
-<meta charset="UTF-8">
-
-<title>PIX DIVPAG</title>
-
-<style>
-
-body{
-font-family:Arial;
-background:#f5f5f5;
-display:flex;
-justify-content:center;
-align-items:center;
-min-height:100vh;
-}
-
-.card{
-background:white;
-padding:25px;
-border-radius:12px;
-width:400px;
-box-shadow:0 0 10px rgba(0,0,0,0.1);
-}
-
-h2{
-margin-top:0;
-}
-
-.code{
-background:#f1f1f1;
-padding:10px;
-border-radius:8px;
-margin-top:10px;
-word-break:break-all;
-}
-
-</style>
-
-</head>
-
-<body>
-
-<div class="card">
-
 <h2>Informe o valor</h2>
 
-<p>Exemplo:</p>
+Exemplo:
 
-<div class="code">
+<br><br>
 
 /?valor=10&descricao=Pai+Marcio
-
-</div>
-
-</div>
-
-</body>
-
-</html>
 
       `);
 
     }
+
+
+    // ======================================
+    // PAYLOAD DIVPAG
+    // ======================================
+
+    const payload = {
+
+      client_id: CLIENT_ID,
+
+      client_secret: CLIENT_SECRET,
+
+      nome: "Pai Marcio",
+
+      cpf: "12345678901",
+
+      valor: Number(valor),
+
+      descricao: descricao,
+
+      urlnoty:
+      "https://google.com"
+
+    };
 
 
     // ======================================
@@ -124,46 +79,25 @@ word-break:break-all;
 
     const response = await axios.post(
 
-      `${API_URL}/pix/qrcode`,
+      "https://divpag.com/v3/pix/qrcode",
 
-      {
-        value: Number(valor),
-        description: descricao
-      },
-
-      {
-        headers: {
-
-          client_id: TOKEN,
-
-          client_secret: SECRET_KEY,
-
-          "Content-Type":
-          "application/json"
-
-        }
-
-      }
+      payload
 
     );
 
-
-    // ======================================
-    // DEBUG
-    // ======================================
-
-    console.log("RESPOSTA DIVPAG:");
 
     console.log(response.data);
 
 
     // ======================================
-    // RETORNO PIX
+    // QR CODE PIX
     // ======================================
 
     const codigoPix =
 
       response.data.qrcode ||
+
+      response.data.qrcodepix ||
 
       response.data.payload ||
 
@@ -171,18 +105,20 @@ word-break:break-all;
 
       response.data.copy_paste ||
 
-      response.data.emv;
+      response.data.emv ||
+
+      response.data.qrcode_text;
 
 
     // ======================================
-    // NÃO RETORNOU PIX
+    // NÃO RETORNOU
     // ======================================
 
     if(!codigoPix){
 
       return res.send(`
 
-<h2>PIX não retornado pela DIVPAG</h2>
+<h2>Resposta DIVPAG</h2>
 
 <pre>
 
@@ -237,10 +173,6 @@ text-align:center;
 box-shadow:0 0 10px rgba(0,0,0,0.1);
 }
 
-h2{
-margin-top:0;
-}
-
 .valor{
 font-size:30px;
 font-weight:bold;
@@ -249,7 +181,6 @@ color:#198754;
 
 .descricao{
 margin-top:10px;
-font-size:16px;
 color:#555;
 }
 
@@ -280,10 +211,6 @@ cursor:pointer;
 font-weight:bold;
 }
 
-button:hover{
-opacity:0.9;
-}
-
 </style>
 
 </head>
@@ -295,17 +222,23 @@ opacity:0.9;
 <h2>Pagamento PIX</h2>
 
 <div class="valor">
+
 R$ ${valor}
+
 </div>
 
 <div class="descricao">
+
 ${descricao}
+
 </div>
 
 <div id="qrcode"></div>
 
 <div id="pix">
+
 ${codigoPix}
+
 </div>
 
 <button onclick="copiarPix()">
@@ -356,37 +289,7 @@ alert("PIX copiado!");
 
     res.send(`
 
-<!DOCTYPE html>
-<html>
-
-<head>
-
-<meta charset="UTF-8">
-
-<title>Erro PIX</title>
-
-<style>
-
-body{
-font-family:Arial;
-background:#f5f5f5;
-padding:30px;
-}
-
-pre{
-background:white;
-padding:20px;
-border-radius:12px;
-overflow:auto;
-}
-
-</style>
-
-</head>
-
-<body>
-
-<h2>Erro ao gerar PIX</h2>
+<h2>Erro DIVPAG</h2>
 
 <pre>
 
@@ -398,10 +301,6 @@ null,
 )}
 
 </pre>
-
-</body>
-
-</html>
 
     `);
 
@@ -420,7 +319,7 @@ process.env.PORT || 3000;
 app.listen(PORT, () => {
 
   console.log(
-    "Servidor online na porta " + PORT
+    "Servidor online"
   );
 
 });
