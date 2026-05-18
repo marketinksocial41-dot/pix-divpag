@@ -5,6 +5,7 @@ const axios = require("axios");
 const app = express();
 
 app.use(cors());
+app.use(express.json());
 
 
 // ======================================
@@ -12,10 +13,10 @@ app.use(cors());
 // ======================================
 
 const CLIENT_ID =
-"paimarcio_7296392775";
+process.env.CLIENT_ID;
 
 const CLIENT_SECRET =
-"cf5d4772d85c371533b1debf3e59df75b0a5cf1c6a56746c5fc2c82549fa4593";
+process.env.CLIENT_SECRET;
 
 
 // ======================================
@@ -40,13 +41,66 @@ app.get("/", async (req, res) => {
 
       return res.send(`
 
-      <h2>Informe o valor</h2>
+<!DOCTYPE html>
+<html lang="pt-br">
 
-      Exemplo:
+<head>
 
-      <br><br>
+<meta charset="UTF-8">
 
-      /?valor=10&descricao=Pai+Marcio
+<title>PIX DIVPAG</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f5f5f5;
+display:flex;
+justify-content:center;
+align-items:center;
+min-height:100vh;
+margin:0;
+}
+
+.card{
+background:white;
+padding:25px;
+border-radius:12px;
+width:400px;
+box-shadow:0 0 10px rgba(0,0,0,0.1);
+}
+
+.code{
+background:#f1f1f1;
+padding:10px;
+border-radius:8px;
+margin-top:10px;
+word-break:break-all;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="card">
+
+<h2>Informe o valor</h2>
+
+<p>Exemplo:</p>
+
+<div class="code">
+
+/?valor=10&descricao=Pai+Marcio
+
+</div>
+
+</div>
+
+</body>
+
+</html>
 
       `);
 
@@ -211,6 +265,10 @@ cursor:pointer;
 font-weight:bold;
 }
 
+button:hover{
+opacity:0.9;
+}
+
 </style>
 
 </head>
@@ -289,6 +347,36 @@ alert("PIX copiado!");
 
     res.send(`
 
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>Erro DIVPAG</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f5f5f5;
+padding:30px;
+}
+
+pre{
+background:white;
+padding:20px;
+border-radius:12px;
+overflow:auto;
+}
+
+</style>
+
+</head>
+
+<body>
+
 <h2>Erro DIVPAG</h2>
 
 <pre>
@@ -301,6 +389,10 @@ null,
 )}
 
 </pre>
+
+</body>
+
+</html>
 
     `);
 
@@ -319,7 +411,7 @@ process.env.PORT || 3000;
 app.listen(PORT, () => {
 
   console.log(
-    "Servidor online"
+    "Servidor online na porta " + PORT
   );
 
 });
