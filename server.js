@@ -36,13 +36,13 @@ app.get("/", async (req, res) => {
 
       return res.send(`
 
-<h2>Informe o valor</h2>
+      <h2>Informe o valor</h2>
 
-Exemplo:
+      Exemplo:
 
-<br><br>
+      <br><br>
 
-/?valor=10&descricao=Pai+Marcio
+      /?valor=10&descricao=Pai+Marcio
 
       `);
 
@@ -90,7 +90,7 @@ Exemplo:
 
 
     // ======================================
-    // QR CODE PIX
+    // RETORNO PIX
     // ======================================
 
     const codigoPix =
@@ -109,10 +109,6 @@ Exemplo:
 
       response.data.qrcode_text;
 
-
-    // ======================================
-    // NÃO RETORNOU
-    // ======================================
 
     if(!codigoPix){
 
@@ -136,7 +132,7 @@ null,
 
 
     // ======================================
-    // HTML FINAL
+    // HTML
     // ======================================
 
     res.send(`
@@ -255,7 +251,7 @@ QRCode.toCanvas(
 
 document.getElementById("qrcode"),
 
-`${codigoPix}`,
+"${codigoPix}",
 
 {
 width:280
@@ -266,7 +262,7 @@ width:280
 function copiarPix(){
 
 navigator.clipboard.writeText(
-`${codigoPix}`
+"${codigoPix}"
 );
 
 alert("PIX copiado!");
