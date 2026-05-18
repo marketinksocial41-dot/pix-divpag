@@ -66,8 +66,20 @@ app.get("/", async (req, res) => {
     const descricao =
       req.query.descricao || "Pagamento";
 
+
     // ======================================
-    // VALIDAR VALOR
+    // NOME E CPF VINDO DO HTML
+    // ======================================
+
+    const nome =
+      req.query.nome;
+
+    const cpf =
+      req.query.cpf;
+
+
+    // ======================================
+    // VALIDAR CAMPOS
     // ======================================
 
     if(!valor){
@@ -119,25 +131,11 @@ word-break:break-all;
 
 <div class="card">
 
-<h2>Informe o valor</h2>
-
-<p>Exemplo:</p>
+<h2>Informe os parâmetros</h2>
 
 <div class="code">
 
-/?valor=10&descricao=Pai+Marcio
-
-</div>
-
-<p>
-
-Ver IP do servidor:
-
-</p>
-
-<div class="code">
-
-/ip
+/?valor=10&descricao=Pedido&nome=Marcio+Martins&cpf=04555404386
 
 </div>
 
@@ -150,6 +148,35 @@ Ver IP do servidor:
       `);
 
     }
+
+
+    // ======================================
+    // VALIDAR NOME
+    // ======================================
+
+    if(!nome){
+
+      return res.send("Nome obrigatório");
+
+    }
+
+
+    // ======================================
+    // VALIDAR CPF
+    // ======================================
+
+    if(!cpf){
+
+      return res.send("CPF obrigatório");
+
+    }
+
+
+    // ======================================
+    // LIMPAR CPF
+    // ======================================
+
+    const cpfLimpo = cpf.replace(/\D/g, "");
 
 
     // ======================================
@@ -170,12 +197,12 @@ Ver IP do servidor:
 
     params.append(
       "nome",
-      "Marcio Martins Lopes"
+      nome
     );
 
     params.append(
       "cpf",
-      "04555404386"
+      cpfLimpo
     );
 
     params.append(
