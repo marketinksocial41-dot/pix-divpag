@@ -20,6 +20,13 @@ const CLIENT_SECRET =
 
 
 // ======================================
+// ARMAZENAMENTO TEMPORÁRIO
+// ======================================
+
+const pagamentos = {};
+
+
+// ======================================
 // DEBUG
 // ======================================
 
@@ -28,7 +35,82 @@ console.log("CLIENT_SECRET:", CLIENT_SECRET);
 
 
 // ======================================
-// VER IP DO RENDER
+// WEBHOOK DIVPAG
+// ======================================
+// RECEBE CONFIRMAÇÃO REAL DO PAGAMENTO
+// ======================================
+
+app.post("/webhook", (req, res) => {
+
+  try {
+
+    console.log("WEBHOOK RECEBIDO:");
+    console.log(req.body);
+
+    const transacaoId =
+
+      req.body.id ||
+
+      req.body.txid ||
+
+      req.body.transaction_id ||
+
+      req.body.pix_id;
+
+    const status = (
+      req.body.status ||
+      ""
+    ).toLowerCase();
+
+    if(
+      transacaoId &&
+      (
+        status.includes("pago") ||
+        status.includes("paid") ||
+        status.includes("approved") ||
+        status.includes("aprovado")
+      )
+    ){
+
+      pagamentos[transacaoId] = true;
+
+      console.log(
+        "Pagamento confirmado:",
+        transacaoId
+      );
+
+    }
+
+    res.send("OK");
+
+  } catch(err){
+
+    console.log(err);
+
+    res.send("ERRO");
+
+  }
+
+});
+
+
+// ======================================
+// CONSULTAR STATUS
+// ======================================
+
+app.get("/status/:id", (req, res) => {
+
+  const id = req.params.id;
+
+  res.send({
+    pago: pagamentos[id] || false
+  });
+
+});
+
+
+// ======================================
+// VER IP
 // ======================================
 
 app.get("/ip", async (req, res) => {
@@ -79,78 +161,15 @@ app.get("/", async (req, res) => {
 
     if(!valor){
 
-      return res.send(`
-
-<!DOCTYPE html>
-<html lang="pt-br">
-
-<head>
-
-<meta charset="UTF-8">
-
-<title>PIX DIVPAG</title>
-
-<style>
-
-body{
-font-family:Arial;
-background:#f5f5f5;
-display:flex;
-justify-content:center;
-align-items:center;
-min-height:100vh;
-margin:0;
-}
-
-.card{
-background:white;
-padding:25px;
-border-radius:12px;
-width:400px;
-box-shadow:0 0 10px rgba(0,0,0,0.1);
-}
-
-.code{
-background:#f1f1f1;
-padding:10px;
-border-radius:8px;
-margin-top:10px;
-word-break:break-all;
-}
-
-</style>
-
-</head>
-
-<body>
-
-<div class="card">
-
-<h2>Informe os parâmetros</h2>
-
-<div class="code">
-
-/?valor=10&descricao=Pedido&nome=Marcio+Martins&cpf=04555404386
-
-</div>
-
-</div>
-
-</body>
-
-</html>
-
-      `);
+      return res.send("Valor obrigatório");
 
     }
-
 
     if(!nome){
 
       return res.send("Nome obrigatório");
 
     }
-
 
     if(!cpf){
 
@@ -202,9 +221,14 @@ word-break:break-all;
       descricao
     );
 
+
+    // ======================================
+    // WEBHOOK URL
+    // ======================================
+
     params.append(
       "urlnoty",
-      "https://google.com"
+      "https://pix-divpag-1.onrender.com/webhook"
     );
 
 
@@ -233,7 +257,7 @@ word-break:break-all;
 
 
     // ======================================
-    // RETORNO PIX
+    // PIX
     // ======================================
 
     const codigoPix =
@@ -254,59 +278,32 @@ word-break:break-all;
 
 
     // ======================================
+    // ID TRANSAÇÃO
+    // ======================================
+
+    const transacaoId =
+
+      response.data.id ||
+
+      response.data.txid ||
+
+      response.data.transaction_id ||
+
+      response.data.pix_id ||
+
+      Date.now().toString();
+
+
+    // ======================================
     // NÃO RETORNOU PIX
     // ======================================
 
     if(!codigoPix){
 
       return res.send(`
-
-<!DOCTYPE html>
-<html>
-
-<head>
-
-<meta charset="UTF-8">
-
-<title>Resposta DIVPAG</title>
-
-<style>
-
-body{
-font-family:Arial;
-background:#f5f5f5;
-padding:30px;
-}
-
-pre{
-background:white;
-padding:20px;
-border-radius:12px;
-overflow:auto;
-}
-
-</style>
-
-</head>
-
-<body>
-
-<h2>Resposta DIVPAG</h2>
-
-<pre>
-
-${JSON.stringify(
-response.data,
-null,
-2
-)}
-
-</pre>
-
-</body>
-
-</html>
-
+        <pre>
+${JSON.stringify(response.data,null,2)}
+        </pre>
       `);
 
     }
@@ -345,15 +342,14 @@ padding:20px;
 .card{
 background:white;
 padding:25px;
-border-radius:12px;
+border-radius:14px;
 width:420px;
 text-align:center;
-box-shadow:0 0 10px rgba(0,0,0,0.1);
-position:relative;
+box-shadow:0 0 15px rgba(0,0,0,0.1);
 }
 
 .valor{
-font-size:30px;
+font-size:32px;
 font-weight:bold;
 color:#198754;
 }
@@ -372,8 +368,8 @@ justify-content:center;
 #pix{
 margin-top:20px;
 background:#f1f1f1;
-padding:10px;
-border-radius:8px;
+padding:12px;
+border-radius:10px;
 word-break:break-all;
 font-size:13px;
 text-align:left;
@@ -398,8 +394,15 @@ opacity:0.9;
 
 .status{
 margin-top:18px;
-font-size:15px;
+font-size:16px;
 color:#666;
+}
+
+.loading{
+margin-top:15px;
+color:#198754;
+font-weight:bold;
+animation:pulse 1s infinite;
 }
 
 .success{
@@ -409,7 +412,6 @@ padding:20px;
 background:#e9fff1;
 border-radius:12px;
 border:2px solid #198754;
-animation:fade 0.4s ease;
 }
 
 .success h2{
@@ -418,22 +420,24 @@ margin-bottom:10px;
 }
 
 .countdown{
-font-size:22px;
+font-size:25px;
 font-weight:bold;
 margin-top:10px;
 color:#198754;
 }
 
-@keyframes fade{
+@keyframes pulse{
 
-from{
-opacity:0;
-transform:scale(0.95);
+0%{
+opacity:0.5;
 }
 
-to{
+50%{
 opacity:1;
-transform:scale(1);
+}
+
+100%{
+opacity:0.5;
 }
 
 }
@@ -478,7 +482,13 @@ Copiar PIX
 
 <div class="status">
 
-Aguardando pagamento...
+Aguardando confirmação do pagamento...
+
+</div>
+
+<div class="loading">
+
+Verificando pagamento automaticamente...
 
 </div>
 
@@ -498,7 +508,7 @@ Seu pagamento foi aprovado com sucesso.
 </p>
 
 <p>
-Esta página será fechada automaticamente em:
+Fechando página em:
 </p>
 
 <div class="countdown" id="countdown">
@@ -550,12 +560,40 @@ alert("PIX copiado!");
 
 
 // ======================================
-// SIMULAÇÃO PAGAMENTO APROVADO
-// ======================================
-// TROQUE PELO SEU WEBHOOK REAL FUTURAMENTE
+// CONSULTA PAGAMENTO REAL
 // ======================================
 
-setTimeout(() => {
+async function verificarPagamento(){
+
+  try {
+
+    const response = await fetch(
+      "/status/${transacaoId}"
+    );
+
+    const data =
+      await response.json();
+
+    if(data.pago){
+
+      pagamentoAprovado();
+
+    }
+
+  } catch(err){
+
+    console.log(err);
+
+  }
+
+}
+
+
+// ======================================
+// PAGAMENTO APROVADO
+// ======================================
+
+function pagamentoAprovado(){
 
 document
 .getElementById("pagamentoArea")
@@ -588,7 +626,18 @@ window.location.href = "about:blank";
 
 }, 1000);
 
-}, 15000);
+}
+
+
+// ======================================
+// LOOP VERIFICAÇÃO
+// ======================================
+
+setInterval(() => {
+
+verificarPagamento();
+
+}, 5000);
 
 </script>
 
